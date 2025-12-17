@@ -1,0 +1,13 @@
+# Harbor 配置（可选，也可以在前端页面配置）
+# 复制此文件为 .env 并修改配置
+HARBOR_REGISTRY=harbor.company.com
+HARBOR_USERNAME=admin
+HARBOR_PASSWORD=your_password
+
+# 应用配置
+APP_HOST=0.0.0.0
+APP_PORT=8000
+
+# 前端 URL
+FRONTEND_URL=http://localhost:5173
+
