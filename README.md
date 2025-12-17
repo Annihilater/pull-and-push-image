@@ -15,11 +15,13 @@
 ## 技术栈
 
 ### 后端
+
 - Python 3.10+
 - FastAPI
 - Uvicorn
 
 ### 前端
+
 - React 18
 - Vite
 - TailwindCSS
@@ -27,16 +29,19 @@
 ## 前置要求
 
 1. **Docker**：必须安装并运行
+
    ```bash
    docker --version
    ```
 
 2. **Docker Buildx**（推荐）：用于多平台支持
+
    ```bash
    docker buildx version
    ```
 
 3. **Skopeo**（可选）：更高效的镜像同步
+
    ```bash
    # macOS
    brew install skopeo
@@ -46,11 +51,13 @@
    ```
 
 4. **Node.js 18+**：用于前端开发
+
    ```bash
    node --version
    ```
 
 5. **Python 3.10+**：用于后端服务
+
    ```bash
    python3 --version
    ```
@@ -72,7 +79,7 @@ pip install -r requirements.txt
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-后端启动后访问 http://localhost:8000/docs 查看 API 文档。
+后端启动后访问 <http://localhost:8000/docs> 查看 API 文档。
 
 ### 2. 启动前端
 
@@ -87,11 +94,11 @@ npm install
 npm run dev
 ```
 
-前端启动后访问 http://localhost:5173
+前端启动后访问 <http://localhost:5173>
 
 ## 使用方法
 
-1. 打开前端页面 http://localhost:5173
+1. 打开前端页面 <http://localhost:5173>
 2. 输入源镜像地址（如 `nginx:latest` 或 `bitnami/redis:7.0`）
 3. 输入目标 Harbor 地址（如 `harbor.company.com`）
 4. 配置 Harbor 认证（点击"Harbor 认证"按钮）
@@ -161,7 +168,7 @@ HARBOR_PASSWORD=your_password
 
 ## 项目结构
 
-```
+```bash
 pull-and-push-image/
 ├── backend/
 │   ├── app/
@@ -189,4 +196,3 @@ pull-and-push-image/
 ## License
 
 MIT
-
