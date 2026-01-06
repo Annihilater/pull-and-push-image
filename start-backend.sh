@@ -20,5 +20,5 @@ pip install -r requirements.txt -q
 # 启动服务
 echo "启动后端服务..."
 echo "API 文档: http://localhost:8000/docs"
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8097 --reload
 
