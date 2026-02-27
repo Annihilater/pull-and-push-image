@@ -90,7 +90,7 @@ jobs:
           chmod +x "${BUNDLE_DIR}"/*.sh
 
           # 复制环境变量模板
-          cp deploy/data/.env "${BUNDLE_DIR}/data/.env.example"
+          cp deploy/data/.env.example "${BUNDLE_DIR}/data/.env.example"
 
           # 创建 README
           cat > "${BUNDLE_DIR}/README.md" << 'DEPLOY_README'
