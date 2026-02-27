@@ -444,3 +444,5 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/windows,macos,linux,go,rust,rust-analyzer,python,java,jetbrains+all,vim,visualstudiocode
 
 frontend/node_modules/
+
+push-to-github.sh
