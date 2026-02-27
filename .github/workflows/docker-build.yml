@@ -12,7 +12,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -25,6 +25,7 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
           echo "backend_image=ghcr.io/${REPO_LOWER}/backend" >> "$GITHUB_OUTPUT"
           echo "frontend_image=ghcr.io/${REPO_LOWER}/frontend" >> "$GITHUB_OUTPUT"
 
@@ -66,6 +67,123 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # ---- 打包部署物料 ----
+      - name: Package deployment bundle
+        run: |
+          VERSION=${{ steps.meta.outputs.version }}
+          BUNDLE_DIR="image-sync-${VERSION}"
+
+          mkdir -p "${BUNDLE_DIR}/data"
+
+          # 复制 docker-compose 并替换版本占位符
+          sed "s/__VERSION__/${VERSION}/g" deploy/docker-compose.prod.yml > "${BUNDLE_DIR}/docker-compose.yml"
+
+          # 复制部署脚本
+          cp deploy/common.sh "${BUNDLE_DIR}/"
+          cp deploy/start.sh "${BUNDLE_DIR}/"
+          cp deploy/stop.sh "${BUNDLE_DIR}/"
+          cp deploy/restart.sh "${BUNDLE_DIR}/"
+          cp deploy/logs.sh "${BUNDLE_DIR}/"
+          cp deploy/status.sh "${BUNDLE_DIR}/"
+          cp deploy/exec.sh "${BUNDLE_DIR}/"
+          cp deploy/pull.sh "${BUNDLE_DIR}/"
+          chmod +x "${BUNDLE_DIR}"/*.sh
+
+          # 复制环境变量模板
+          cp deploy/data/.env "${BUNDLE_DIR}/data/.env.example"
+
+          # 创建 README
+          cat > "${BUNDLE_DIR}/README.md" << 'DEPLOY_README'
+          # Docker Image Sync 部署包
+
+          ## 快速部署
+
+          ```bash
+          # 1. 复制并编辑配置文件
+          cp data/.env.example data/.env
+          vi data/.env
+
+          # 2. 启动服务
+          ./start.sh
+
+          # 3. 访问
+          # 默认地址: http://localhost:8080
+          ```
+
+          ## 管理命令
+
+          | 命令 | 说明 |
+          |------|------|
+          | `./start.sh` | 启动服务 |
+          | `./stop.sh` | 停止服务 |
+          | `./restart.sh` | 重启服务 |
+          | `./logs.sh` | 查看日志（可追加服务名） |
+          | `./status.sh` | 查看状态 |
+          | `./exec.sh` | 进入容器（默认 backend） |
+          | `./pull.sh` | 拉取最新镜像 |
+
+          ## 配置说明
+
+          编辑 `data/.env` 文件：
+
+          | 变量 | 说明 | 默认值 |
+          |------|------|--------|
+          | `HARBOR_REGISTRY` | Harbor 地址 | - |
+          | `HARBOR_USERNAME` | Harbor 用户名 | - |
+          | `HARBOR_PASSWORD` | Harbor 密码 | - |
+          | `FRONTEND_PORT` | 前端访问端口 | 8080 |
+
+          ## 前置要求
+
+          - Docker 20.10+
+          - Docker Compose v2（或 docker-compose v1.29+）
+          - 能访问 ghcr.io（拉取镜像）
+          DEPLOY_README
+
+          # 去掉 heredoc 缩进
+          sed -i 's/^          //' "${BUNDLE_DIR}/README.md"
+
+          # 打包
+          tar czf "${BUNDLE_DIR}.tar.gz" "${BUNDLE_DIR}"
+          echo "bundle_name=${BUNDLE_DIR}" >> "$GITHUB_OUTPUT"
+          echo "bundle_file=${BUNDLE_DIR}.tar.gz" >> "$GITHUB_OUTPUT"
+
+      # ---- 创建 GitHub Release ----
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: "Release ${{ steps.meta.outputs.tag }}"
+          body: |
+            ## Docker Image Sync ${{ steps.meta.outputs.tag }}
+
+            ### 🐳 Docker 镜像
+
+            ```bash
+            docker pull ${{ steps.meta.outputs.backend_image }}:${{ steps.meta.outputs.version }}
+            docker pull ${{ steps.meta.outputs.frontend_image }}:${{ steps.meta.outputs.version }}
+            ```
+
+            ### 📦 一键部署
+
+            1. 下载下方部署包 `image-sync-${{ steps.meta.outputs.version }}.tar.gz`
+            2. 解压到服务器
+            3. 编辑配置并启动
+
+            ```bash
+            tar xzf image-sync-${{ steps.meta.outputs.version }}.tar.gz
+            cd image-sync-${{ steps.meta.outputs.version }}
+            cp data/.env.example data/.env
+            vi data/.env
+            ./start.sh
+            ```
+
+            访问 `http://<服务器IP>:8080`
+          files: |
+            image-sync-${{ steps.meta.outputs.version }}.tar.gz
+          draft: false
+          prerelease: false
+
       - name: Summary
         run: |
           echo "## 🐳 Docker Images Published" >> "$GITHUB_STEP_SUMMARY"
@@ -74,6 +192,10 @@ jobs:
           echo "|-------|------|" >> "$GITHUB_STEP_SUMMARY"
           echo "| \`${{ steps.meta.outputs.backend_image }}\` | \`${{ steps.meta.outputs.version }}\`, \`latest\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| \`${{ steps.meta.outputs.frontend_image }}\` | \`${{ steps.meta.outputs.version }}\`, \`latest\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## 📦 Deployment Bundle" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Release: [${{ steps.meta.outputs.tag }}](https://github.com/${{ github.repository }}/releases/tag/${{ steps.meta.outputs.tag }})" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "### 拉取命令" >> "$GITHUB_STEP_SUMMARY"
           echo "\`\`\`bash" >> "$GITHUB_STEP_SUMMARY"

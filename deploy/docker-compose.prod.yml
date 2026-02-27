@@ -1,8 +1,12 @@
+# Docker Image Sync - 生产部署配置
+# 使用预构建的 ghcr.io 镜像，无需本地构建
+#
+# 镜像版本由 CI 自动替换 __VERSION__ 占位符
+# 如需手动修改版本，替换 image 字段中的 tag 即可
+
 services:
   backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    image: ghcr.io/annihilater/pull-and-push-image/backend:__VERSION__
     container_name: image-sync-backend
     restart: unless-stopped
     env_file:
@@ -18,9 +22,7 @@ services:
       - image-sync
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: ghcr.io/annihilater/pull-and-push-image/frontend:__VERSION__
     container_name: image-sync-frontend
     restart: unless-stopped
     ports:
