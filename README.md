@@ -64,7 +64,36 @@
 
 ## 快速开始
 
-### 1. 启动后端
+### 方式一：Docker Compose 部署（推荐）
+
+```bash
+# 1. 编辑配置
+vi deploy/data/.env
+
+# 2. 启动服务
+cd deploy
+chmod +x *.sh
+./start.sh
+```
+
+启动后访问 <http://localhost:8080>（默认端口，可通过 `FRONTEND_PORT` 环境变量修改）。
+
+> **注意**：后端容器需要挂载宿主机 Docker socket（`/var/run/docker.sock`），以便执行镜像拉取和推送操作。
+
+部署管理命令：
+
+```bash
+cd deploy
+./stop.sh       # 停止服务
+./restart.sh    # 重启服务
+./logs.sh       # 查看日志（可追加服务名：./logs.sh backend）
+./status.sh     # 查看状态
+./exec.sh       # 进入容器（默认 backend，可追加服务名）
+```
+
+### 方式二：本地开发
+
+#### 启动后端
 
 ```bash
 # 方式一：使用启动脚本
@@ -81,7 +110,7 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 后端启动后访问 <http://localhost:8000/docs> 查看 API 文档。
 
-### 2. 启动前端
+#### 启动前端
 
 ```bash
 # 方式一：使用启动脚本
@@ -171,6 +200,7 @@ HARBOR_PASSWORD=your_password
 ```bash
 pull-and-push-image/
 ├── backend/
+│   ├── Dockerfile              # 后端镜像构建
 │   ├── app/
 │   │   ├── api/
 │   │   │   └── routes.py      # API 路由
@@ -182,14 +212,27 @@ pull-and-push-image/
 │   │   └── main.py            # 入口
 │   └── requirements.txt
 ├── frontend/
+│   ├── Dockerfile              # 前端镜像构建（多阶段：node build + nginx）
+│   ├── nginx.conf              # nginx 配置（含 API 反向代理）
 │   ├── src/
 │   │   ├── App.jsx            # 主组件
 │   │   ├── main.jsx           # 入口
 │   │   └── index.css          # 样式
 │   ├── package.json
 │   └── vite.config.js
-├── start-backend.sh           # 后端启动脚本
-├── start-frontend.sh          # 前端启动脚本
+├── deploy/
+│   ├── docker-compose.yml     # Docker Compose 编排
+│   ├── data/.env              # 部署环境变量
+│   ├── common.sh              # 公共函数
+│   ├── start.sh               # 启动
+│   ├── stop.sh                # 停止
+│   ├── restart.sh             # 重启
+│   ├── logs.sh                # 日志
+│   ├── status.sh              # 状态
+│   ├── exec.sh                # 进入容器
+│   └── pull.sh                # 拉取镜像
+├── start-backend.sh           # 本地后端启动脚本
+├── start-frontend.sh          # 本地前端启动脚本
 └── README.md
 ```
 

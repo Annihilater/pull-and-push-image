@@ -1,0 +1,33 @@
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: image-sync-backend
+    restart: unless-stopped
+    env_file:
+      - ./data/.env
+    volumes:
+      # 挂载宿主机 Docker socket，使容器内可以执行 docker 命令
+      - /var/run/docker.sock:/var/run/docker.sock
+      # 挂载 Docker 配置（包含 Harbor 登录凭据等）
+      - ${DOCKER_CONFIG_PATH:-/root/.docker}:/root/.docker:ro
+    networks:
+      - image-sync
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: image-sync-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      - backend
+    networks:
+      - image-sync
+
+networks:
+  image-sync:
+    driver: bridge
